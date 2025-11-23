@@ -1,0 +1,57 @@
+{
+  "last_updated": "2025-11-23 11:00:00",
+  "matches": [
+    {
+      "match_id": "ARS-TOT",
+      "home_team": "Arsenal",
+      "away_team": "Tottenham Hotspur",
+      "league": "Premier League",
+      "date": "2025-11-23",
+      "time": "20:45",
+      "home_elo": 94,
+      "away_elo": 88,
+      "home_tilt": -2.8,
+      "away_tilt": -1.7,
+      "home_rank": 18,
+      "away_rank": 88,
+      "home_country_rank": 2,
+      "away_country_rank": 9,
+      "home_expected_goals": 2.1,
+      "away_expected_goals": 1.2
+    },
+    {
+      "match_id": "INT-MIL",
+      "home_team": "Inter",
+      "away_team": "Milan",
+      "league": "Serie A",
+      "date": "2025-11-23",
+      "time": "20:45",
+      "home_elo": 94,
+      "away_elo": 91,
+      "home_tilt": 7.1,
+      "away_tilt": -1.2,
+      "home_rank": 19,
+      "away_rank": 45,
+      "home_country_rank": 2,
+      "away_country_rank": 5,
+      "home_expected_goals": 1.8,
+      "away_expected_goals": 1.4
+    },
+    {
+      "match_id": "ELC-RMA",
+      "home_team": "Elche",
+      "away_team": "Real Madrid",
+      "league": "La Liga",
+      "date": "2025-11-23",
+      "time": "20:45",
+      "home_elo": 80,
+      "away_elo": 473,
+      "home_tilt": -4.1,
+      "away_tilt": 21,
+      "home_rank": 21,
+      "away_rank": 1,
+      "home_expected_goals": 0.73,
+      "away_expected_goals": 2.8
+    }
+  ]
+}
