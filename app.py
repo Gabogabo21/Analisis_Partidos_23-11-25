@@ -1,296 +1,490 @@
+import streamlit as st
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from datetime import datetime
-import plotly.graph_objects as go
+import json
 import plotly.express as px
-from plotly.subplots import make_subplots
+import plotly.graph_objects as go
+from datetime import datetime
 
-# Configuración inicial
-plt.style.use('default')
-sns.set_palette("husl")
+# Configuración de la página
+st.set_page_config(
+    page_title="⚽ Soccer Prediction Dashboard",
+    page_icon="⚽",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# Datos de los partidos
+# Datos directamente en el código (para evitar problemas con archivos JSON)
 matches_data = {
-    'match_id': ['ARS-TOT', 'INT-MIL', 'ELC-RMA'],
-    'home_team': ['Arsenal', 'Inter', 'Elche'],
-    'away_team': ['Tottenham', 'Milan', 'Real Madrid'],
-    'league': ['Premier League', 'Serie A', 'La Liga'],
-    'date': ['2025-11-23', '2025-11-23', '2025-11-23'],
-    'time': ['20:45', '20:45', '20:45'],
-    
-    # Datos ELO y probabilidades
-    'home_elo': [94, 94, 80],
-    'away_elo': [88, 91, 473],
-    'home_tilt': [-2.8, 7.1, -4.1],
-    'away_tilt': [-1.7, -1.2, 21],
-    'home_rank': [18, 19, 21],
-    'away_rank': [88, 45, 1],
-    'home_country_rank': [2, 2, None],
-    'away_country_rank': [9, 5, None],
-    
-    # Probabilidades de victoria
-    'home_win_prob': [65.2, 59.4, 11.1],
-    'draw_prob': [19.7, 20.9, 18.3],
-    'away_win_prob': [15.1, 19.7, 70.6],
-    
-    # Goles esperados
-    'home_expected_goals': [2.1, 1.8, 0.73],
-    'away_expected_goals': [1.2, 1.4, 2.8]
+    'last_updated': '2025-11-23 11:00:00',
+    'matches': [
+        {
+            'match_id': 'ARS-TOT',
+            'home_team': 'Arsenal',
+            'away_team': 'Tottenham Hotspur',
+            'league': 'Premier League',
+            'date': '2025-11-23',
+            'time': '20:45',
+            'home_elo': 94,
+            'away_elo': 88,
+            'home_tilt': -2.8,
+            'away_tilt': -1.7,
+            'home_rank': 18,
+            'away_rank': 88,
+            'home_country_rank': 2,
+            'away_country_rank': 9,
+            'home_expected_goals': 2.1,
+            'away_expected_goals': 1.2
+        },
+        {
+            'match_id': 'INT-MIL',
+            'home_team': 'Inter',
+            'away_team': 'Milan',
+            'league': 'Serie A',
+            'date': '2025-11-23',
+            'time': '20:45',
+            'home_elo': 94,
+            'away_elo': 91,
+            'home_tilt': 7.1,
+            'away_tilt': -1.2,
+            'home_rank': 19,
+            'away_rank': 45,
+            'home_country_rank': 2,
+            'away_country_rank': 5,
+            'home_expected_goals': 1.8,
+            'away_expected_goals': 1.4
+        },
+        {
+            'match_id': 'ELC-RMA',
+            'home_team': 'Elche',
+            'away_team': 'Real Madrid',
+            'league': 'La Liga',
+            'date': '2025-11-23',
+            'time': '20:45',
+            'home_elo': 80,
+            'away_elo': 473,
+            'home_tilt': -4.1,
+            'away_tilt': 21,
+            'home_rank': 21,
+            'away_rank': 1,
+            'home_expected_goals': 0.73,
+            'away_expected_goals': 2.8
+        }
+    ]
 }
 
-# Crear DataFrame principal
-df_matches = pd.DataFrame(matches_data)
-
-# Datos de resultados exactos (probabilidades)
-exact_scores = {
+predictions_data = {
     'ARS-TOT': {
-        '1-0': 10.2, '2-0': 10.8, '2-1': 9.9, '3-0': 7.7, '3-1': 7.0,
-        '0-0': 5.5, '1-1': 8.7, '0-1': 12.0, '1-2': 9.4, '2-2': 3.4
+        'probabilities': {
+            'home_win': 65.2,
+            'draw': 19.7,
+            'away_win': 15.1
+        },
+        'exact_scores': {
+            '1-0': 10.2, '2-0': 10.8, '2-1': 9.9, '3-0': 7.7, '3-1': 7.0,
+            '0-0': 5.5, '1-1': 8.7, '0-1': 12.0, '1-2': 9.4, '2-2': 3.4
+        },
+        'handicap': {
+            '+1': 23.8, '0': 65.2, '-1': 19.7, '-2': 10.2
+        },
+        'analysis': {
+            'confidence': 'high',
+            'expected_goals_total': 3.3,
+            'goal_expectation': 'high',
+            'recommendation': 'PREDICCIÓN SÓLIDA'
+        }
     },
     'INT-MIL': {
-        '1-0': 8.5, '2-0': 9.2, '2-1': 8.1, '3-0': 6.5, '3-1': 5.8,
-        '0-0': 6.2, '1-1': 7.9, '0-1': 10.5, '1-2': 8.2, '2-2': 2.8
+        'probabilities': {
+            'home_win': 59.4,
+            'draw': 20.9,
+            'away_win': 19.7
+        },
+        'exact_scores': {
+            '1-0': 8.5, '2-0': 9.2, '2-1': 8.1, '3-0': 6.5, '3-1': 5.8,
+            '0-0': 6.2, '1-1': 7.9, '0-1': 10.5, '1-2': 8.2, '2-2': 2.8
+        },
+        'handicap': {
+            '+1': 21.5, '0': 59.4, '-1': 22.1, '-2': 11.8
+        },
+        'analysis': {
+            'confidence': 'medium',
+            'expected_goals_total': 3.2,
+            'goal_expectation': 'high',
+            'recommendation': 'PREDICCIÓN MODERADA'
+        }
     },
     'ELC-RMA': {
-        '0-1': 12.0, '0-2': 8.5, '1-2': 9.4, '0-3': 5.2, '1-3': 4.1,
-        '1-1': 8.7, '0-0': 5.5, '1-0': 4.0, '2-1': 3.2, '2-2': 3.4
+        'probabilities': {
+            'home_win': 11.1,
+            'draw': 18.3,
+            'away_win': 70.6
+        },
+        'exact_scores': {
+            '0-1': 12.0, '0-2': 8.5, '1-2': 9.4, '0-3': 5.2, '1-3': 4.1,
+            '1-1': 8.7, '0-0': 5.5, '1-0': 4.0, '2-1': 3.2, '2-2': 3.4
+        },
+        'handicap': {
+            '+1': 8.1, '+2': 2.4, '0': 11.1, '-1': 24.3
+        },
+        'analysis': {
+            'confidence': 'very_high',
+            'expected_goals_total': 3.53,
+            'goal_expectation': 'high',
+            'recommendation': 'PREDICCIÓN MUY SÓLIDA'
+        }
     }
 }
 
-# Datos de handicap
-handicap_data = {
-    'ARS-TOT': {'+1': 23.8, '0': 65.2, '-1': 19.7, '-2': 10.2},
-    'INT-MIL': {'+1': 21.5, '0': 59.4, '-1': 22.1, '-2': 11.8},
-    'ELC-RMA': {'+1': 8.1, '+2': 2.4, '0': 11.1, '-1': 24.3}
-}
+# CSS personalizado
+st.markdown("""
+<style>
+    .main-header {
+        font-size: 2.5rem;
+        color: #1f77b4;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .match-card {
+        background-color: #f0f2f6;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border-left: 5px solid #1f77b4;
+    }
+    .prediction-high {
+        background-color: #d4edda;
+        border-left: 5px solid #28a745;
+    }
+    .prediction-medium {
+        background-color: #fff3cd;
+        border-left: 5px solid #ffc107;
+    }
+    .prediction-low {
+        background-color: #f8d7da;
+        border-left: 5px solid #dc3545;
+    }
+    .team-box {
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+</style>
+""", unsafe_allow_html=True)
 
-print("=== DASHBOARD DE PREDICCIÓN DE PARTIDOS ===")
-print(f"Fecha: {datetime.now().strftime('%d/%m/%Y')}")
-print("=" * 50)
+# Header principal
+st.markdown('<h1 class="main-header">⚽ Soccer Prediction Dashboard</h1>', unsafe_allow_html=True)
 
-# 1. VISUALIZACIÓN PRINCIPAL DE PROBABILIDADES
-def create_probability_dashboard():
-    fig = make_subplots(
-        rows=2, cols=3,
-        subplot_titles=[f"{row['home_team']} vs {row['away_team']}" for _, row in df_matches.iterrows()] + 
-                      [f"Distribución {row['home_team']} vs {row['away_team']}" for _, row in df_matches.iterrows()],
-        specs=[[{"type": "pie"}, {"type": "pie"}, {"type": "pie"}],
-               [{"type": "bar"}, {"type": "bar"}, {"type": "bar"}]]
+# Sidebar
+with st.sidebar:
+    st.header("🎯 Configuración")
+    
+    # Selector de partido
+    selected_match = st.selectbox(
+        "Selecciona un partido:",
+        ["Todos los Partidos", "Arsenal vs Tottenham", "Inter vs Milan", "Elche vs Real Madrid"]
     )
     
-    for i, (_, match) in enumerate(df_matches.iterrows()):
-        # Gráficos de torta (probabilidades)
-        labels = ['Victoria Local', 'Empate', 'Victoria Visitante']
-        values = [match['home_win_prob'], match['draw_prob'], match['away_win_prob']]
-        
-        fig.add_trace(
-            go.Pie(labels=labels, values=values, name=f"{match['home_team']} vs {match['away_team']}"),
-            row=1, col=i+1
-        )
-        
-        # Gráficos de barras (resultados exactos)
-        match_scores = exact_scores[match['match_id']]
-        scores = list(match_scores.keys())
-        probs = list(match_scores.values())
-        
-        fig.add_trace(
-            go.Bar(x=scores, y=probs, name="Resultados Exactos"),
-            row=2, col=i+1
-        )
+    # Filtros
+    st.subheader("🔍 Filtros")
+    show_high_confidence = st.checkbox("Solo predicciones de alta confianza", value=False)
+    min_confidence = st.slider("Confianza mínima (%)", 0, 100, 40)
     
-    fig.update_layout(height=800, showlegend=False, title_text="Dashboard de Predicciones - Todos los Partidos")
-    fig.show()
+    # Información
+    st.subheader("ℹ️ Información")
+    st.info("""
+    Predicciones basadas en:
+    - **Sistema ELO** de rating
+    - **Machine Learning**
+    - **Análisis estadístico**
+    """)
 
-create_probability_dashboard()
+# Pestañas principales
+tab1, tab2, tab3 = st.tabs(["🏠 Dashboard Principal", "📊 Análisis Detallado", "📈 Comparativas"])
 
-# 2. ANÁLISIS DETALLADO POR PARTIDO
-def detailed_match_analysis():
-    for _, match in df_matches.iterrows():
-        print(f"\n🔍 ANÁLISIS DETALLADO: {match['home_team']} vs {match['away_team']}")
-        print("-" * 60)
-        
-        # Información básica
-        print(f"📅 Liga: {match['league']} | ⏰ Hora: {match['time']}")
-        print(f"🏆 Ranking ELO: {match['home_team']} ({match['home_elo']}) vs {match['away_team']} ({match['away_elo']})")
-        print(f"📊 Tilt Ofensivo: {match['home_team']} ({match['home_tilt']}%) vs {match['away_team']} ({match['away_tilt']}%)")
-        
-        # Predicción principal
-        max_prob = max(match['home_win_prob'], match['draw_prob'], match['away_win_prob'])
-        if max_prob == match['home_win_prob']:
-            prediction = f"Victoria del {match['home_team']}"
-        elif max_prob == match['draw_prob']:
-            prediction = "Empate"
-        else:
-            prediction = f"Victoria del {match['away_team']}"
-            
-        print(f"🎯 PREDICCIÓN PRINCIPAL: {prediction} ({max_prob:.1f}% probabilidad)")
-        
-        # Goles esperados
-        print(f"⚽ Goles Esperados: {match['home_team']} ({match['home_expected_goals']:.2f}) - {match['away_team']} ({match['away_expected_goals']:.2f})")
-        
-        # Resultados más probables
-        match_scores = exact_scores[match['match_id']]
-        top_scores = sorted(match_scores.items(), key=lambda x: x[1], reverse=True)[:3]
-        print("📈 Resultados más probables:")
-        for score, prob in top_scores:
-            print(f"   {score}: {prob}%")
-        
-        # Análisis de handicap
-        handicap = handicap_data[match['match_id']]
-        print("🎲 Análisis de Handicap:")
-        for h, prob in handicap.items():
-            print(f"   Handicap {h}: {prob}%")
-
-detailed_match_analysis()
-
-# 3. COMPARATIVA ENTRE PARTIDOS
-def comparative_analysis():
-    print("\n📊 COMPARATIVA ENTRE PARTIDOS")
-    print("=" * 50)
+with tab1:
+    st.header("🎯 Resumen de Predicciones del Día")
     
-    fig, axes = plt.subplots(2, 2, figsize=(15, 12))
-    
-    # Gráfico 1: Probabilidades de victoria comparadas
-    teams = [f"{row['home_team']}\nvs\n{row['away_team']}" for _, row in df_matches.iterrows()]
-    home_probs = df_matches['home_win_prob']
-    draw_probs = df_matches['draw_prob']
-    away_probs = df_matches['away_win_prob']
-    
-    x = np.arange(len(teams))
-    width = 0.25
-    
-    axes[0,0].bar(x - width, home_probs, width, label='Victoria Local', alpha=0.8)
-    axes[0,0].bar(x, draw_probs, width, label='Empate', alpha=0.8)
-    axes[0,0].bar(x + width, away_probs, width, label='Victoria Visitante', alpha=0.8)
-    
-    axes[0,0].set_xlabel('Partidos')
-    axes[0,0].set_ylabel('Probabilidad (%)')
-    axes[0,0].set_title('Comparativa de Probabilidades de Resultado')
-    axes[0,0].set_xticks(x)
-    axes[0,0].set_xticklabels(teams, rotation=45)
-    axes[0,0].legend()
-    axes[0,0].grid(True, alpha=0.3)
-    
-    # Gráfico 2: Rating ELO comparado
-    axes[0,1].bar(x - 0.2, df_matches['home_elo'], 0.4, label='ELO Local', alpha=0.7)
-    axes[0,1].bar(x + 0.2, df_matches['away_elo'], 0.4, label='ELO Visitante', alpha=0.7)
-    axes[0,1].set_xlabel('Partidos')
-    axes[0,1].set_ylabel('Rating ELO')
-    axes[0,1].set_title('Comparativa de Rating ELO')
-    axes[0,1].set_xticks(x)
-    axes[0,1].set_xticklabels(teams, rotation=45)
-    axes[0,1].legend()
-    axes[0,1].grid(True, alpha=0.3)
-    
-    # Gráfico 3: Goles esperados
-    axes[1,0].bar(x - 0.2, df_matches['home_expected_goals'], 0.4, label='Goles Local', alpha=0.7)
-    axes[1,0].bar(x + 0.2, df_matches['away_expected_goals'], 0.4, label='Goles Visitante', alpha=0.7)
-    axes[1,0].set_xlabel('Partidos')
-    axes[1,0].set_ylabel('Goles Esperados')
-    axes[1,0].set_title('Comparativa de Goles Esperados')
-    axes[1,0].set_xticks(x)
-    axes[1,0].set_xticklabels(teams, rotation=45)
-    axes[1,0].legend()
-    axes[1,0].grid(True, alpha=0.3)
-    
-    # Gráfico 4: Tilt ofensivo
-    axes[1,1].bar(x - 0.2, df_matches['home_tilt'], 0.4, label='Tilt Local', alpha=0.7)
-    axes[1,1].bar(x + 0.2, df_matches['away_tilt'], 0.4, label='Tilt Visitante', alpha=0.7)
-    axes[1,1].set_xlabel('Partidos')
-    axes[1,1].set_ylabel('Tilt Ofensivo (%)')
-    axes[1,1].set_title('Comparativa de Tilt Ofensivo')
-    axes[1,1].set_xticks(x)
-    axes[1,1].set_xticklabels(teams, rotation=45)
-    axes[1,1].legend()
-    axes[1,1].grid(True, alpha=0.3)
-    
-    plt.tight_layout()
-    plt.show()
-
-comparative_analysis()
-
-# 4. PREDICCIONES FINALES Y RECOMENDACIONES
-def final_predictions():
-    print("\n🎯 PREDICCIONES FINALES Y RECOMENDACIONES")
-    print("=" * 60)
-    
-    recommendations = []
-    
-    for _, match in df_matches.iterrows():
-        home_team = match['home_team']
-        away_team = match['away_team']
-        home_prob = match['home_win_prob']
-        draw_prob = match['draw_prob']
-        away_prob = match['away_win_prob']
+    # Mostrar todos los partidos
+    for match in matches_data['matches']:
+        match_id = match['match_id']
+        prediction = predictions_data[match_id]
         
         # Determinar predicción principal
-        if home_prob > away_prob and home_prob > draw_prob:
-            prediction = f"✅ VICTORIA DE {home_team.upper()}"
+        home_prob = prediction['probabilities']['home_win']
+        draw_prob = prediction['probabilities']['draw']
+        away_prob = prediction['probabilities']['away_win']
+        
+        max_prob = max(home_prob, draw_prob, away_prob)
+        if max_prob == home_prob:
+            main_prediction = f"Victoria del {match['home_team']}"
             confidence = home_prob
-        elif away_prob > home_prob and away_prob > draw_prob:
-            prediction = f"✅ VICTORIA DE {away_team.upper()}"
-            confidence = away_prob
-        else:
-            prediction = "⚖️ EMPATE"
+            pred_type = 'home_win'
+        elif max_prob == draw_prob:
+            main_prediction = "Empate"
             confidence = draw_prob
-        
-        # Análisis de valor
-        expected_goals = match['home_expected_goals'] + match['away_expected_goals']
-        goal_expectation = "ALTA" if expected_goals > 2.5 else "MEDIA" if expected_goals > 1.5 else "BAJA"
-        
-        # Recomendación
-        if confidence > 60:
-            recommendation = "💪 PREDICCIÓN SÓLIDA"
-        elif confidence > 45:
-            recommendation = "🤔 PREDICCIÓN MODERADA"
+            pred_type = 'draw'
         else:
-            recommendation = "⚠️ PARTIDO INCIERTO"
+            main_prediction = f"Victoria del {match['away_team']}"
+            confidence = away_prob
+            pred_type = 'away_win'
         
-        print(f"\n🏆 {home_team} vs {away_team}")
-        print(f"   {prediction} ({confidence:.1f}% confianza)")
-        print(f"   📊 Expectativa de goles: {goal_expectation} ({expected_goals:.2f} goles totales)")
-        print(f"   💡 Recomendación: {recommendation}")
+        # Aplicar filtros
+        if show_high_confidence and confidence < 60:
+            continue
+        if confidence < min_confidence:
+            continue
         
-        # Resultado exacto más probable
-        match_scores = exact_scores[match['match_id']]
-        most_probable_score = max(match_scores.items(), key=lambda x: x[1])
-        print(f"   🎯 Resultado exacto más probable: {most_probable_score[0]} ({most_probable_score[1]}%)")
+        # Determinar clase CSS según confianza
+        if confidence >= 60:
+            css_class = "prediction-high"
+        elif confidence >= 45:
+            css_class = "prediction-medium"
+        else:
+            css_class = "prediction-low"
         
-        recommendations.append({
-            'partido': f"{home_team} vs {away_team}",
-            'prediccion': prediction,
-            'confianza': confidence,
-            'recomendacion': recommendation
+        # Tarjeta del partido
+        with st.container():
+            col1, col2, col3 = st.columns([2, 1, 1])
+            
+            with col1:
+                st.markdown(f"""
+                <div class="match-card {css_class}">
+                    <h3>{match['home_team']} 🆚 {match['away_team']}</h3>
+                    <p><strong>Liga:</strong> {match['league']} | <strong>Hora:</strong> {match['time']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col2:
+                st.metric(
+                    label="🎯 Predicción Principal",
+                    value=main_prediction,
+                    delta=f"{confidence:.1f}% confianza"
+                )
+            
+            with col3:
+                st.metric(
+                    label="⚽ Goles Esperados",
+                    value=f"{match['home_expected_goals']:.1f} - {match['away_expected_goals']:.1f}"
+                )
+            
+            # Gráfico de probabilidades
+            prob_data = pd.DataFrame({
+                'Resultado': ['Victoria Local', 'Empate', 'Victoria Visitante'],
+                'Probabilidad': [home_prob, draw_prob, away_prob]
+            })
+            
+            fig = px.bar(prob_data, x='Resultado', y='Probabilidad', 
+                        color='Resultado',
+                        color_discrete_map={
+                            'Victoria Local': '#28a745',
+                            'Empate': '#ffc107', 
+                            'Victoria Visitante': '#dc3545'
+                        })
+            fig.update_layout(
+                height=200, 
+                showlegend=False, 
+                title=f"Probabilidades - {match['home_team']} vs {match['away_team']}",
+                xaxis_title="",
+                yaxis_title="Probabilidad (%)"
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+with tab2:
+    st.header("📊 Análisis Detallado por Partido")
+    
+    # Selector de partido para análisis detallado
+    match_options = {f"{m['home_team']} vs {m['away_team']}": m['match_id'] for m in matches_data['matches']}
+    selected_match_name = st.selectbox("Selecciona un partido:", list(match_options.keys()))
+    selected_match_id = match_options[selected_match_name]
+    
+    match = next(m for m in matches_data['matches'] if m['match_id'] == selected_match_id)
+    prediction = predictions_data[selected_match_id]
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Información del partido
+        st.subheader("📋 Información del Partido")
+        
+        st.write(f"**Liga:** {match['league']}")
+        st.write(f"**Fecha y Hora:** {match['date']} | {match['time']}")
+        st.write(f"**Rating ELO Local:** {match['home_elo']}")
+        st.write(f"**Rating ELO Visitante:** {match['away_elo']}")
+        st.write(f"**Tilt Ofensivo Local:** {match['home_tilt']}%")
+        st.write(f"**Tilt Ofensivo Visitante:** {match['away_tilt']}%")
+        
+        # Métricas clave
+        st.subheader("📈 Métricas Clave")
+        col1_1, col1_2, col1_3 = st.columns(3)
+        
+        with col1_1:
+            st.metric("Goles Esperados Local", f"{match['home_expected_goals']:.2f}")
+        with col1_2:
+            st.metric("Goles Esperados Visitante", f"{match['away_expected_goals']:.2f}")
+        with col1_3:
+            total_goals = match['home_expected_goals'] + match['away_expected_goals']
+            st.metric("Total Goles Esperados", f"{total_goals:.2f}")
+    
+    with col2:
+        # Gráfico de probabilidades circular
+        st.subheader("🎯 Probabilidades de Resultado")
+        
+        labels = ['Victoria Local', 'Empate', 'Victoria Visitante']
+        values = [
+            prediction['probabilities']['home_win'], 
+            prediction['probabilities']['draw'], 
+            prediction['probabilities']['away_win']
+        ]
+        
+        fig_pie = go.Figure(data=[go.Pie(
+            labels=labels, 
+            values=values, 
+            marker_colors=['#28a745', '#ffc107', '#dc3545']
+        )])
+        fig_pie.update_layout(height=300)
+        st.plotly_chart(fig_pie, use_container_width=True)
+    
+    # Resultados exactos más probables
+    st.subheader("🎲 Resultados Exactos Más Probables")
+    
+    exact_scores = prediction['exact_scores']
+    top_scores = sorted(exact_scores.items(), key=lambda x: x[1], reverse=True)[:10]
+    
+    scores_df = pd.DataFrame(top_scores, columns=['Resultado', 'Probabilidad (%)'])
+    
+    fig_scores = px.bar(
+        scores_df, 
+        x='Resultado', 
+        y='Probabilidad (%)',
+        title="Top 10 Resultados Más Probables"
+    )
+    st.plotly_chart(fig_scores, use_container_width=True)
+    
+    # Análisis de handicap
+    st.subheader("📊 Análisis de Handicap")
+    
+    handicap_data = prediction['handicap']
+    handicap_df = pd.DataFrame(
+        list(handicap_data.items()), 
+        columns=['Handicap', 'Probabilidad (%)']
+    )
+    
+    fig_handicap = px.bar(
+        handicap_df, 
+        x='Handicap', 
+        y='Probabilidad (%)',
+        title="Probabilidades de Handicap"
+    )
+    st.plotly_chart(fig_handicap, use_container_width=True)
+
+with tab3:
+    st.header("📈 Comparativa Entre Partidos")
+    
+    # Datos para comparativa
+    comparison_data = []
+    for match in matches_data['matches']:
+        match_id = match['match_id']
+        prediction = predictions_data[match_id]
+        
+        comparison_data.append({
+            'Partido': f"{match['home_team']} vs {match['away_team']}",
+            'Liga': match['league'],
+            'Prob Victoria Local': prediction['probabilities']['home_win'],
+            'Prob Empate': prediction['probabilities']['draw'],
+            'Prob Victoria Visitante': prediction['probabilities']['away_win'],
+            'ELO Local': match['home_elo'],
+            'ELO Visitante': match['away_elo'],
+            'Goles Esperados Local': match['home_expected_goals'],
+            'Goles Esperados Visitante': match['away_expected_goals'],
+            'Confianza Máxima': max(
+                prediction['probabilities']['home_win'], 
+                prediction['probabilities']['draw'], 
+                prediction['probabilities']['away_win']
+            )
         })
     
-    return recommendations
+    comparison_df = pd.DataFrame(comparison_data)
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Comparativa de probabilidades
+        st.subheader("📊 Comparativa de Probabilidades")
+        
+        fig_comp = go.Figure()
+        
+        fig_comp.add_trace(go.Bar(
+            name='Victoria Local', 
+            x=comparison_df['Partido'], 
+            y=comparison_df['Prob Victoria Local'],
+            marker_color='#28a745'
+        ))
+        
+        fig_comp.add_trace(go.Bar(
+            name='Empate', 
+            x=comparison_df['Partido'], 
+            y=comparison_df['Prob Empate'],
+            marker_color='#ffc107'
+        ))
+        
+        fig_comp.add_trace(go.Bar(
+            name='Victoria Visitante', 
+            x=comparison_df['Partido'], 
+            y=comparison_df['Prob Victoria Visitante'],
+            marker_color='#dc3545'
+        ))
+        
+        fig_comp.update_layout(
+            barmode='group', 
+            height=400,
+            title="Comparativa de Probabilidades por Partido"
+        )
+        st.plotly_chart(fig_comp, use_container_width=True)
+    
+    with col2:
+        # Comparativa de ELO
+        st.subheader("🏆 Comparativa de Rating ELO")
+        
+        fig_elo = go.Figure()
+        
+        fig_elo.add_trace(go.Bar(
+            name='ELO Local', 
+            x=comparison_df['Partido'], 
+            y=comparison_df['ELO Local'],
+            marker_color='#1f77b4'
+        ))
+        
+        fig_elo.add_trace(go.Bar(
+            name='ELO Visitante', 
+            x=comparison_df['Partido'], 
+            y=comparison_df['ELO Visitante'],
+            marker_color='#ff7f0e'
+        ))
+        
+        fig_elo.update_layout(
+            barmode='group', 
+            height=400,
+            title="Comparativa de Rating ELO"
+        )
+        st.plotly_chart(fig_elo, use_container_width=True)
+    
+    # Tabla comparativa
+    st.subheader("📋 Tabla Comparativa Completa")
+    st.dataframe(
+        comparison_df.style.background_gradient(
+            subset=['Confianza Máxima'], 
+            cmap='YlOrBr'
+        ), 
+        use_container_width=True
+    )
 
-# Ejecutar análisis final
-final_recommendations = final_predictions()
-
-# 5. RESUMEN EJECUTIVO
-print("\n" + "=" * 70)
-print("📋 RESUMEN EJECUTIVO - PREDICCIONES DEL DÍA")
-print("=" * 70)
-
-for i, rec in enumerate(final_recommendations, 1):
-    print(f"\n{i}. {rec['partido']}")
-    print(f"   Predicción: {rec['prediccion']}")
-    print(f"   Nivel de confianza: {rec['confianza']:.1f}%")
-    print(f"   Recomendación: {rec['recomendacion']}")
-
-print("\n" + "=" * 70)
-print("⚠️ NOTA: Estas predicciones están basadas en modelos de machine learning")
-print("y análisis estadístico. El fútbol es impredecible - ¡disfruta del juego!")
-print("=" * 70)
-
-# 6. DATAFRAME CONSOLIDADO
-print("\n📁 DATOS COMPLETOS DE PREDICCIÓN")
-print("=" * 50)
-display_df = df_matches[['home_team', 'away_team', 'home_win_prob', 'draw_prob', 'away_win_prob', 
-                         'home_elo', 'away_elo', 'home_expected_goals', 'away_expected_goals']].copy()
-display_df.columns = ['Local', 'Visitante', 'Prob Victoria Local', 'Prob Empate', 'Prob Victoria Visitante',
-                     'ELO Local', 'ELO Visitante', 'Goles Esp. Local', 'Goles Esp. Visitante']
-display(display_df.round(2))
+# Footer
+st.markdown("---")
+st.markdown("""
+<div style='text-align: center'>
+    <p><strong>⚽ Soccer Prediction Dashboard</strong> - Predicciones basadas en Machine Learning</p>
+    <p><em>⚠️ Disclaimer: Las predicciones son basadas en modelos estadísticos. El fútbol es impredecible - ¡disfruta del juego responsablemente!</em></p>
+</div>
+""", unsafe_allow_html=True)
